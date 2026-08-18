@@ -1,12 +1,18 @@
 # dsh-plugin-task-done-notify
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 DSH 任务完成通知插件：当 agent 完成一轮回复（`running: true → false`）时，
 用浏览器系统通知（Windows 右下角 toast）自动弹出"任务完成 ✓"。
+
+## 功能
 
 - 仅在页面处于后台时通知（可关）
 - 最短耗时门槛（秒），短问答不打扰
 - 默认不通知子代理会话（可开）
 - 设置：DSH 设置 → General → "任务完成通知"
+- 纯浏览器端插件：宿主行仅占位，检测逻辑订阅 `ctx.sessions.list`，
+  无构建依赖，`pnpm test` 全量单测（core 单测 + vm 冒烟）
 
 ## 安装
 
@@ -46,3 +52,9 @@ pnpm build   # 重新生成 lib/client.js（core.js + app.js 拼接）
 ## 已知限制
 
 浏览器通知要求 DSH 标签页处于打开状态（后台/最小化即可）；浏览器整体关闭时收不到。
+
+## 作者与许可
+
+作者：[lpz0521](https://github.com/lpz0521) · 以 [MIT](LICENSE) 许可发布。
+
+在 GitHub 上给本项目一个 ⭐ 吧：<https://github.com/lpz0521/dsh-plugin-task-done-notify>
