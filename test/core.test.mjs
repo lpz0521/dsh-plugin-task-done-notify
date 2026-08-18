@@ -7,6 +7,7 @@ import {
   loadSettings,
   saveSettings,
   diffSessions,
+  notifyDecision,
   shouldNotify,
 } from "../lib/core.js";
 
@@ -107,4 +108,20 @@ test("shouldNotify decision chain", () => {
   assert.equal(shouldNotify({ ...DEFAULTS, includeSubagents: true }, { ...base, parentId: "p" }), true);
   assert.equal(shouldNotify({ ...DEFAULTS, minDurationSec: 60 }, { ...base, elapsedSec: 5 }), false);
   assert.equal(shouldNotify({ ...DEFAULTS, minDurationSec: 60 }, { ...base, elapsedSec: 61 }), true);
+});
+
+test("notifyDecision reports a human-readable reason", () => {
+  const base = { parentId: undefined, hasFocus: false, elapsedSec: 0 };
+  assert.deepEqual(notifyDecision(DEFAULTS, base), { ok: true, reason: null });
+  assert.equal(notifyDecision({ ...DEFAULTS, enabled: false }, base).reason, "总开关已关闭");
+  assert.equal(notifyDecision(DEFAULTS, { ...base, parentId: "p" }).reason, "子代理会话（默认不通知）");
+  assert.equal(
+    notifyDecision({ ...DEFAULTS, onlyWhenBackground: true }, { ...base, hasFocus: true }).reason,
+    "页面聚焦（已开启仅后台模式）"
+  );
+  assert.equal(
+    notifyDecision({ ...DEFAULTS, minDurationSec: 60 }, { ...base, elapsedSec: 5 }).reason,
+    "耗时不足 5s < 60s"
+  );
+  assert.equal(notifyDecision(DEFAULTS, { ...base, elapsedSec: 5 }).ok, true);
 });
