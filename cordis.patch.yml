@@ -1,0 +1,8 @@
+# dsh-plugin-task-done-notify bundle patch.
+# One host row: a no-op Cordis plugin that makes this package a loader entry,
+# which is what dsh-client-modules scans to discover the browser half
+# (package.json dsh.client -> ./client bundle).
+
+- insert:
+    - id: task-done-notify
+      name: 'dsh-plugin-task-done-notify'
