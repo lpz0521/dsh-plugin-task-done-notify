@@ -13,7 +13,7 @@ import {
 test("DEFAULTS and SETTINGS_KEY are stable", () => {
   assert.deepEqual(DEFAULTS, {
     enabled: true,
-    onlyWhenBackground: true,
+    onlyWhenBackground: false,
     minDurationSec: 0,
     includeSubagents: false,
   });
@@ -29,7 +29,7 @@ test("normalizeSettings fills defaults and rejects bad values", () => {
   });
   const bad = normalizeSettings({ minDurationSec: -5, onlyWhenBackground: "yes" });
   assert.equal(bad.minDurationSec, 0);
-  assert.equal(bad.onlyWhenBackground, true);
+  assert.equal(bad.onlyWhenBackground, false);
   const ok = normalizeSettings({ minDurationSec: 12.9 });
   assert.equal(ok.minDurationSec, 12);
 });
@@ -98,7 +98,10 @@ test("shouldNotify decision chain", () => {
   const base = { parentId: undefined, hasFocus: false, elapsedSec: 0 };
   assert.equal(shouldNotify(DEFAULTS, base), true);
   assert.equal(shouldNotify({ ...DEFAULTS, enabled: false }, base), false);
-  assert.equal(shouldNotify(DEFAULTS, { ...base, hasFocus: true }), false);
+  // default: notify regardless of page focus
+  assert.equal(shouldNotify(DEFAULTS, { ...base, hasFocus: true }), true);
+  // the background-only toggle still works when enabled
+  assert.equal(shouldNotify({ ...DEFAULTS, onlyWhenBackground: true }, { ...base, hasFocus: true }), false);
   assert.equal(shouldNotify({ ...DEFAULTS, onlyWhenBackground: false }, { ...base, hasFocus: true }), true);
   assert.equal(shouldNotify(DEFAULTS, { ...base, parentId: "p" }), false);
   assert.equal(shouldNotify({ ...DEFAULTS, includeSubagents: true }, { ...base, parentId: "p" }), true);

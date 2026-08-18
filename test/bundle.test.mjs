@@ -123,6 +123,10 @@ test("turn completion in background fires one notification", () => {
 
 test("focused page does not notify when onlyWhenBackground is on", () => {
   const h = makeSandbox();
+  h.sandbox.localStorage.setItem(
+    "dsh-task-done-notify:settings",
+    JSON.stringify({ onlyWhenBackground: true })
+  );
   const mod = loadBundle(h.sandbox);
   mod.apply(h.sandbox.ctx);
   h.setFocus(true);
@@ -131,6 +135,18 @@ test("focused page does not notify when onlyWhenBackground is on", () => {
   h.setSnapshot({ ids: ["a"], byId: { a: idle("a", "A") } });
   h.fire();
   assert.equal(h.notifications.length, 0);
+});
+
+test("notifies even when the page is focused (default)", () => {
+  const h = makeSandbox();
+  const mod = loadBundle(h.sandbox);
+  mod.apply(h.sandbox.ctx);
+  h.setFocus(true);
+  h.setSnapshot({ ids: ["a"], byId: { a: busy("a", "A") } });
+  h.fire();
+  h.setSnapshot({ ids: ["a"], byId: { a: idle("a", "A") } });
+  h.fire();
+  assert.equal(h.notifications.length, 1);
 });
 
 test("subagent completion is silent by default, notified when enabled", () => {
