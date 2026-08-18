@@ -7,6 +7,7 @@ import {
   loadSettings,
   saveSettings,
   diffSessions,
+  diffPending,
   notifyDecision,
   shouldNotify,
   workspaceTitleOf,
@@ -144,4 +145,35 @@ test("workspaceTitleOf resolves the accounting workspace", () => {
 test("notificationBody includes workspace when known", () => {
   assert.equal(notificationBody("项目A", "会话1"), "工作区：项目A · 会话：会话1");
   assert.equal(notificationBody("", "会话1"), "会话：会话1");
+});
+
+test("diffPending reports new pending interactions once per status", () => {
+  const notified = new Set();
+  const idle = { a: { id: "a", displayTitle: "A", running: false } };
+  const asking = { a: { id: "a", displayTitle: "A", running: false, pendingInteraction: "question" } };
+  const approving = { a: { id: "a", displayTitle: "A", running: false, pendingInteraction: "approval" } };
+
+  assert.deepEqual(diffPending(idle, idle, notified), []);
+  const first = diffPending(idle, asking, notified);
+  assert.equal(first.length, 1);
+  assert.equal(first[0].status, "question");
+  assert.equal(first[0].parentId, undefined);
+  // same status does not re-notify
+  assert.deepEqual(diffPending(asking, asking, notified), []);
+  // status change re-notifies
+  const second = diffPending(asking, approving, notified);
+  assert.equal(second.length, 1);
+  assert.equal(second[0].status, "approval");
+  // resolution clears; the same status can notify again later
+  assert.deepEqual(diffPending(approving, idle, notified), []);
+  assert.equal(diffPending(idle, asking, notified).length, 1);
+});
+
+test("diffPending carries parentId and clears on removal", () => {
+  const notified = new Set();
+  const subAsking = { s: { id: "s", displayTitle: "S", running: false, pendingInteraction: "question", parentId: "p" } };
+  const first = diffPending({}, subAsking, notified);
+  assert.equal(first[0].parentId, "p");
+  diffPending(subAsking, {}, notified);
+  assert.equal(notified.size, 0);
 });

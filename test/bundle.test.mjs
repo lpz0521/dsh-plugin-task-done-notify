@@ -144,6 +144,27 @@ test("notification body includes workspace and session titles", () => {
   assert.equal(h.notifications[0].options.body, "工作区：项目A · 会话：会话A");
 });
 
+test("agent asking the user fires a 需要你回复 notification once", () => {
+  const h = makeSandbox();
+  const mod = loadBundle(h.sandbox);
+  mod.apply(h.sandbox.ctx);
+  const asking = { a: { id: "a", displayTitle: "会话A", running: false, pendingInteraction: "question" } };
+  h.setSnapshot({ ids: ["a"], byId: asking });
+  h.fire();
+  const replies = h.notifications.filter((n) => n.title === "需要你回复");
+  assert.equal(replies.length, 1);
+  assert.equal(replies[0].options.body, "会话：会话A");
+  // same pending interaction must not re-notify
+  h.fire();
+  assert.equal(h.notifications.filter((n) => n.title === "需要你回复").length, 1);
+  // resolution allows a later question to notify again
+  h.setSnapshot({ ids: ["a"], byId: { a: idle("a", "会话A") } });
+  h.fire();
+  h.setSnapshot({ ids: ["a"], byId: asking });
+  h.fire();
+  assert.equal(h.notifications.filter((n) => n.title === "需要你回复").length, 2);
+});
+
 test("focused page does not notify when onlyWhenBackground is on", () => {
   const h = makeSandbox();
   h.sandbox.localStorage.setItem(
