@@ -3,7 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 DSH 任务完成通知插件：当 agent 完成一轮回复（`running: true → false`）时，
-用浏览器系统通知（Windows 右下角 toast）自动弹出"任务完成 ✓"。
+用浏览器系统通知（Windows 右下角 toast）自动弹出"任务完成 ✓"，
+正文带**工作区 + 会话标题**。
 
 ## 功能
 

@@ -9,6 +9,8 @@ import {
   diffSessions,
   notifyDecision,
   shouldNotify,
+  workspaceTitleOf,
+  notificationBody,
 } from "../lib/core.js";
 
 test("DEFAULTS and SETTINGS_KEY are stable", () => {
@@ -124,4 +126,22 @@ test("notifyDecision reports a human-readable reason", () => {
     "耗时不足 5s < 60s"
   );
   assert.equal(notifyDecision(DEFAULTS, { ...base, elapsedSec: 5 }).ok, true);
+});
+
+test("workspaceTitleOf resolves the accounting workspace", () => {
+  const items = [
+    { workspaceId: "w1", path: "D:\\proj-a", title: "项目A", sessionIds: ["s1", "s2"] },
+    { workspaceId: "w2", path: "D:\\proj-b", title: "项目B", sessionIds: ["s3"] },
+  ];
+  assert.equal(workspaceTitleOf(items, "s2"), "项目A");
+  assert.equal(workspaceTitleOf(items, "s3"), "项目B");
+  assert.equal(workspaceTitleOf(items, "nope"), "");
+  assert.equal(workspaceTitleOf([], "s1"), "");
+  assert.equal(workspaceTitleOf([{ workspaceId: "w", path: "D:\\x", title: "", sessionIds: ["s"] }], "s"), "D:\\x");
+  assert.equal(workspaceTitleOf([{ workspaceId: "w", sessionIds: ["s"] }], "s"), "");
+});
+
+test("notificationBody includes workspace when known", () => {
+  assert.equal(notificationBody("项目A", "会话1"), "工作区：项目A · 会话：会话1");
+  assert.equal(notificationBody("", "会话1"), "会话：会话1");
 });

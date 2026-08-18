@@ -11,6 +11,7 @@ function makeSandbox() {
   let focus = false;
   let listener = null;
   let snapshot = { ids: [], byId: {} };
+  let workspaceItems = [];
   let injected = null;
   const sandbox = {
     console,
@@ -50,6 +51,12 @@ function makeSandbox() {
           },
         },
       },
+      workspaces: {
+        list: {
+          getSnapshot: () => ({ items: workspaceItems }),
+          subscribe: () => () => {},
+        },
+      },
       slots: {
         inject: (key, cb) => {
           injected = { key, cb };
@@ -63,6 +70,7 @@ function makeSandbox() {
   return {
     sandbox,
     setSnapshot(next) { snapshot = next; },
+    setWorkspaces(items) { workspaceItems = items; },
     fire() { if (listener) listener(); },
     notifications,
     setFocus(v) { focus = v; },
@@ -94,7 +102,7 @@ const busy = (id, displayTitle, parentId) => ({ id, displayTitle, running: true,
 test("bundle loads, registers settings row, and disposes cleanly", () => {
   const h = makeSandbox();
   const mod = loadBundle(h.sandbox);
-  assert.deepEqual([...mod.inject], ["sessions", "slots"]);
+  assert.deepEqual([...mod.inject], ["sessions", "slots", "workspaces"]);
   const dispose = mod.apply(h.sandbox.ctx);
   assert.equal(typeof dispose, "function");
   assert.equal(h.injected.key, "settings.general.item");
@@ -121,6 +129,19 @@ test("turn completion in background fires one notification", () => {
   assert.equal(h.notifications[0].options.body, "会话：会话A");
   // 回归锁：不能带 tag —— Chromium 同 tag 通知会被静默吞掉、不弹横幅
   assert.equal("tag" in h.notifications[0].options, false);
+});
+
+test("notification body includes workspace and session titles", () => {
+  const h = makeSandbox();
+  h.setWorkspaces([{ workspaceId: "w1", path: "D:\\proj-a", title: "项目A", sessionIds: ["a"] }]);
+  const mod = loadBundle(h.sandbox);
+  mod.apply(h.sandbox.ctx);
+  h.setSnapshot({ ids: ["a"], byId: { a: busy("a", "会话A") } });
+  h.fire();
+  h.setSnapshot({ ids: ["a"], byId: { a: idle("a", "会话A") } });
+  h.fire();
+  assert.equal(h.notifications.length, 1);
+  assert.equal(h.notifications[0].options.body, "工作区：项目A · 会话：会话A");
 });
 
 test("focused page does not notify when onlyWhenBackground is on", () => {
