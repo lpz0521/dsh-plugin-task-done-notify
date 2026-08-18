@@ -119,6 +119,8 @@ test("turn completion in background fires one notification", () => {
   assert.equal(h.notifications.length, 1);
   assert.equal(h.notifications[0].title, "任务完成 ✓");
   assert.equal(h.notifications[0].options.body, "会话：会话A");
+  // 回归锁：不能带 tag —— Chromium 同 tag 通知会被静默吞掉、不弹横幅
+  assert.equal("tag" in h.notifications[0].options, false);
 });
 
 test("focused page does not notify when onlyWhenBackground is on", () => {
